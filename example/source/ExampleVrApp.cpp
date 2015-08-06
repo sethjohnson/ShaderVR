@@ -130,6 +130,7 @@ void ExampleVrApp::initializeContextSpecificVars(int threadId,
     }
     
     for (int v = 0; v < window->getNumViewports(); v++) {
+        
         _mutex.lock();
         glGenFramebuffers(1, &m_frameBuffers["FrameBufferName"][std::make_pair(threadId, v)]);
         m_frameBufferTextures["renderTexture"][std::make_pair(threadId, v)] = GLuint(0);
@@ -147,24 +148,38 @@ void ExampleVrApp::initializeContextSpecificVars(int threadId,
         glBindTexture(GL_TEXTURE_2D, m_frameBufferTextures["renderTexture"][std::make_pair(threadId, v)]);
         
         // Give an empty image to OpenGL ( the last "0" )
-        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, 400, 400, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, window->getViewport(v).width(), window->getViewport(v).height(), 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
         
         // Poor filtering. Needed !
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+        glGenTextures(1, &m_frameBufferTextures["depthTexture"][std::make_pair(threadId, v)]);
+        
+        // "Bind" the newly created texture : all future texture functions will modify this texture
+        glBindTexture(GL_TEXTURE_2D, m_frameBufferTextures["depthTexture"][std::make_pair(threadId, v)]);
+        
+        // Give an empty image to OpenGL ( the last "0" )
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT24, window->getViewport(v).width(), window->getViewport(v).height(), 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        
+        // Poor filtering. Needed !
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        
+        
+        
         
         glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffers["FrameBufferName"][std::make_pair(threadId, v)]);
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_frameBufferTextures["renderTexture"][std::make_pair(threadId, v)], 0);
-//        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_frameBufferTextures["depthTexture"][std::make_pair(threadId, v)]->getObjectForContext(threadId), 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_frameBufferTextures["depthTexture"][std::make_pair(threadId, v)], 0);
         // Always check that our framebuffer is ok
         
         // The depth buffer
-        GLuint depthrenderbuffer;
-        glGenRenderbuffers(1, &depthrenderbuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 400, 400);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+//        GLuint depthrenderbuffer;
+//        glGenRenderbuffers(1, &depthrenderbuffer);
+//        glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+//        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window->getViewport(v).width(), window->getViewport(v).height());
+//        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
         std::cout << (int)m_frameBuffers["FrameBufferName"][std::make_pair(threadId, v)] << std::endl;
         GLenum error;
         if((error = glCheckFramebufferStatus(GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
@@ -576,8 +591,8 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0);
     _mutex.unlock();
     
     
-//    glActiveTexture(GL_TEXTURE1);
-//    glBindTexture(m_frameBufferTextures["depthTexture"][std::make_pair(threadId, viewportIndex)])
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_frameBufferTextures["depthTexture"][std::make_pair(threadId, viewportIndex)]);
     
     
     quad.bindToContext(threadId);
