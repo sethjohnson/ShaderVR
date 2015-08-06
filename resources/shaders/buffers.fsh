@@ -11,7 +11,7 @@ void main () {
 
 if((int(fragTexCoord.y * 100) %10)/5 == 0)
 discard; 
-	if (fragTexCoord.y > 0.99 )
+	if (fragTexCoord.y > 0.5 )
 	{
 		outColor = vec4(depth, depth, depth, 1);
 	}
